@@ -3,7 +3,7 @@
 #include <string.h> /* memcpy, memset */
 #include <time.h> /*time */
 #include <ctype.h> /*toupper*/
-//#include "sendPost.h"
+#include "sendPost.h"
 
 //PROTOTYPES
 int randomRange(int min, int max);
@@ -27,8 +27,8 @@ int main(void) {
     char tempword[wordsize];
     int words, i, j, up = 0, doppia = 0;
 
-    const int onlineMode = 0;
-	const int n_changes = randomRange(2, wordsize); //pick a random no. of letters to change
+    const int onlineMode = 1;
+    const int n_changes = randomRange(2, wordsize); //pick a random no. of letters to change
 	
     srand((unsigned int) time(NULL));
 	
@@ -88,7 +88,7 @@ int main(void) {
             if (!onlineMode)
                 words++; //this generates a finite amount of words in debug mode
             else {
-                //sendPost(tempword, accesstoken, pageid);
+                sendPost(tempword, accesstoken, pageid);
                 sleep(3600); //1 hour = 60 * 60 seconds
             }
         } else
