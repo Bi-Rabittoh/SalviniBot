@@ -3,14 +3,15 @@
 #include <string.h> /* memcpy, memset */
 #include <time.h> /*time */
 #include <ctype.h> /*toupper*/
-#include <curl/curl.h> /*sendPost*/ //COMMENT THIS IF YOU WANT TO DEBUG OFFLINE
+#include "onlinestuff.h" //COMMENT THIS IF YOU WANT TO DEBUG OFFLINE
+
+#define onlineMode 1 //CHANGE THIS TO 0 IF YOU WANT TO DEBUG OFFLINE
 
 //PROTOTYPES
 int randomRange(int min, int max);
 char randomChar(const char * pool);
 int isBlacklisted(char * string, const char ** blacklist, const int blacklist_size);
 int isPresent(char src, const char * pool);
-int sendPost(char * message, char * accesstoken, char * pageid);
 
 //MAIN
 int main(void) {
@@ -26,13 +27,10 @@ int main(void) {
 
     const int wordsize = strlen(word);
     char tempword[wordsize];
-    int words, i, j, up = 0, dub = 0;
+    time_t clk = time(NULL);
+    int words, i, j, n_changes, up = 0, dub = 0;
+	srand((unsigned int)time(NULL));
 
-    const int onlineMode = 1; //CHANGE THIS TO 0 IF YOU WANT TO DEBUG OFFLINE
-	const int n_changes = randomRange(1, wordsize); //pick a random no. of letters to change
-	
-    srand((unsigned int) time(NULL));
-	
 	//read config from config.txt
 	FILE * fp;
 	fp = fopen("config.txt", "r");
@@ -47,6 +45,7 @@ int main(void) {
 	fclose(fp);
 	
     for (words = 0; words < 100;) {
+    	n_changes = randomRange(1, wordsize); //pick a random no. of letters to change
         strcpy(tempword, word);
         for (j = 0; j < n_changes; j++) {
             //pick a random character position
@@ -56,14 +55,21 @@ int main(void) {
             if (tempword[i] >= 65 && tempword[i] <= 90)
                 up = 1;
 
-            //double letter check
+            /*two-ways double letter check: this always preserves couples of characters
             if (tempword[i + 1] && tempword[i - 1]) {
                 if (tempword[i + 1] == tempword[i])
                     dub = 1;
                 else if (tempword[i - 1] == tempword[i]) {
                     dub = -1;
                 }
-            }
+            }*/
+            
+            /*one-way double letter check: this can lose some couples of characters*/
+            if(tempword[i - 1]){
+            	if(tempword[i - 1] == tempword[i])
+            		dub = -1;
+			}
+			
             //RANDOMIZE
             if (isPresent(tempword[i], vowels_p))
                 tempword[i] = randomChar(vowels_p);
@@ -82,14 +88,17 @@ int main(void) {
                 up = 0;
             }
         }
-        printf("%d. %s changing %d letters.\n", words, tempword, n_changes);
-
+        
         //check if the result is blacklisted
         if (!isBlacklisted(tempword, blacklist, blacklist_size)) {
-            if (!onlineMode)
+            if (!onlineMode){
+            	printf("%d. %s changing %d letters.\n", words, tempword, n_changes);
                 words++; //this generates a finite amount of words in debug mode
+            }
             else {
                 sendPost(tempword, accesstoken, pageid); //COMMENT THIS IF YOU WANT TO DEBUG OFFLINE
+                clk = time(NULL);
+                printf("%s%s changing %d letters.\n", ctime(&clk), tempword, n_changes);
                 sleep(3600); //1 hour = 60 * 60 seconds
             }
         } else
@@ -124,43 +133,5 @@ int isPresent(char src, const char * pool){
 			return 1;
 	}
 	return 0;
-}
-
-int sendPost(char * message, char * accesstoken, char * pageid){
-  CURL *curl;
-  CURLcode res;
-	char body[300];
-	char url[60];
-	int risultato;
-	
-  curl_global_init(CURL_GLOBAL_ALL);
-  
-	strcpy(body, "message=");
-	strcat(body, message);
-	strcat(body, "&access_token=");
-	strcat(body, accesstoken);
-	
-	strcpy(url, "https://graph.facebook.com/");
-	strcat(url, pageid);
-	strcat(url, "/feed");
-	
-
-  curl = curl_easy_init();
-  if(curl) {
-
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
-
-    res = curl_easy_perform(curl);
-    
-    if(res != CURLE_OK){
-      fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-      risultato = 0;
-	} else risultato = 1;
-	
-    curl_easy_cleanup(curl);
-  }
-  curl_global_cleanup();
-  return risultato;
 }
 
