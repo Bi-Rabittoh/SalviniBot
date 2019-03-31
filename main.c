@@ -77,7 +77,7 @@ int main(void) {
             if (!onlineMode) {
                 words++;
             } else {
-                sendPost(tempword, accesstoken, pageid)
+                sendPost(tempword, accesstoken, pageid);
                 sleep(3600);
             }
         } else {
