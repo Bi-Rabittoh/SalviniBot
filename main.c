@@ -8,9 +8,8 @@
 //PROTOTYPES
 int randomRange(int min, int max);
 char randomChar(const char * pool);
-int isBlacklisted(char * string,
-const char ** blacklist,
-const int blacklist_size);
+int isBlacklisted(char * string, const char ** blacklist, const int blacklist_size);
+int isPresent(char src, const char * pool);
 
 //MAIN
 int main(void) {
@@ -21,30 +20,30 @@ int main(void) {
         "Terroni"
     };
     const int blacklist_size = 3;
-    const char vowels_p[] = "aeiou";
-    const char consonants_p[] = "bcdfghjklmnpqrstvwxyz";
-    const char accesstoken[] = "EAAMRbGEjSYwBAKVGcqPpgZBTQOuDvdHZC9JwCgkrAitvYpbglkGYB69FfAJgtr7fTciCkJC0TwyHnGiolRu4aE4F6AbpRpGQyvrcfHK0egnWjzmZAjCtZCdTLsZB6Cnu2YXj32bk6wIbN0q168XaMXEyMdZBYugafDbQWww1EZBl8DxUc9yQmTiSUFwsUvAcDglBZBTaxZB8LOwZDZD";
+    const char vowels_p[] = "aeiou"; //all characters missing from this pool are considered consonants
+    const char consonants_p[] = "bcdfghlmnpqrstvz";
+    const char accesstoken[] = "EAACVS6jUj0QBACtGpqWSP1ulYoVRFFlqi5R2MPItR3V3vAtzwsodHVLLZBsZA6wpWypnqPEQ3NB8uQXsmcsigZA6XFzqrjOJpbZAeSfveWCKudgwzcvoS1wUMxQGhnXwWEjyqFfaGj4ZBs9apd1EZB3ZB8VXtivueMcrAsAFiiomAZDZD";
     const char pageid[] = "2059873757645281";
     const int wordsize = strlen(word);
     char tempword[wordsize];
-    int words, i, j, n_changes, up = 0, doppia = 0;
+    int words, i, j, up = 0, doppia = 0;
 
     const int onlineMode = 1;
-
+	const int n_changes = randomRange(2, wordsize); //pick a random no. of letters to change
+	
     srand((unsigned int) time(NULL));
 
     for (words = 0; words < 100;) {
         strcpy(tempword, word);
-        n_changes = randomRange((wordsize / 2) - 1, wordsize); //randomizzo il numero di lettere da cambiare
         for (j = 0; j < n_changes; j++) {
-            //ottengo un carattere casuale nella parola
+            //pick a random character position
             i = randomRange(0, wordsize - 1);
 
-            //controllo se e' maiuscolo
+            //uppercase check
             if (tempword[i] >= 65 && tempword[i] <= 90)
                 up = 1;
 
-            //controllo se la lettera successiva e' uguale
+            //double letter check
             if (tempword[i + 1] && tempword[i - 1]) {
                 if (tempword[i + 1] == tempword[i])
                     doppia = 1;
@@ -52,37 +51,36 @@ int main(void) {
                     doppia = -1;
                 }
             }
-            //RANDOMIZZO
-            if (tempword[i] == 'a' || tempword[i] == 'e' || tempword[i] == 'i' || tempword[i] == 'o' || tempword[i] == 'u')
+            //RANDOMIZE
+            if (isPresent(tempword[i], vowels_p))
                 tempword[i] = randomChar(vowels_p);
             else
                 tempword[i] = randomChar(consonants_p);
 
-            //sistemo le doppie
+            //fix couples of letters
             if (doppia) {
                 tempword[i + doppia] = tempword[i];
                 doppia = 0;
             }
 
-            //lo rimetto maiuscolo se necessario
+            //fix uppercase characters
             if (up) {
                 tempword[i] = toupper(tempword[i]);
                 up = 0;
             }
         }
-        printf("%d. %s cambiando %d lettere.\n", words, tempword, n_changes);
+        printf("%d. %s changing %d letters.\n", words, tempword, n_changes);
 
-        //pubblico il risultato
+        //check if the result is blacklisted
         if (!isBlacklisted(tempword, blacklist, blacklist_size)) {
-            if (!onlineMode) {
-                words++;
-            } else {
+            if (!onlineMode)
+                words++; //this generates a finite amount of words in debug mode
+            else {
                 sendPost(tempword, accesstoken, pageid);
-                sleep(3600);
+                sleep(3600); //1 hour = 60 * 60 seconds
             }
-        } else {
-            puts("Scartato!");
-        }
+        } else
+            puts("Discarded.");
     }
     return 0;
 }
@@ -105,3 +103,13 @@ int isBlacklisted(char * string, const char ** blacklist, const int blacklist_si
 	}
 	return 0;
 }
+
+int isPresent(char src, const char * pool){
+	int i;
+	for(i = 0; i < strlen(pool); i++){
+		if (pool[i] == src)
+			return 1;
+	}
+	return 0;
+}
+
