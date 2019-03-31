@@ -2,7 +2,7 @@
 #include <curl/curl.h>
 #include <string.h>
 
-int sendPost(char * message, const char * accesstoken, const char * pageid){
+int sendPost(char * message, char * accesstoken, char * pageid){
   CURL *curl;
   CURLcode res;
 	char body[300];
