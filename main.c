@@ -3,13 +3,14 @@
 #include <string.h> /* memcpy, memset */
 #include <time.h> /*time */
 #include <ctype.h> /*toupper*/
-#include "sendPost.h"
+#include <curl/curl.h> /*sendPost*/
 
 //PROTOTYPES
 int randomRange(int min, int max);
 char randomChar(const char * pool);
 int isBlacklisted(char * string, const char ** blacklist, const int blacklist_size);
 int isPresent(char src, const char * pool);
+int sendPost(char * message, char * accesstoken, char * pageid);
 
 //MAIN
 int main(void) {
@@ -25,10 +26,10 @@ int main(void) {
 
     const int wordsize = strlen(word);
     char tempword[wordsize];
-    int words, i, j, up = 0, doppia = 0;
+    int words, i, j, up = 0, dub = 0;
 
-    const int onlineMode = 1;
-    const int n_changes = randomRange(2, wordsize); //pick a random no. of letters to change
+    const int onlineMode = 0;
+	const int n_changes = randomRange(2, wordsize); //pick a random no. of letters to change
 	
     srand((unsigned int) time(NULL));
 	
@@ -58,9 +59,9 @@ int main(void) {
             //double letter check
             if (tempword[i + 1] && tempword[i - 1]) {
                 if (tempword[i + 1] == tempword[i])
-                    doppia = 1;
+                    dub = 1;
                 else if (tempword[i - 1] == tempword[i]) {
-                    doppia = -1;
+                    dub = -1;
                 }
             }
             //RANDOMIZE
@@ -70,9 +71,9 @@ int main(void) {
                 tempword[i] = randomChar(consonants_p);
 
             //fix couples of letters
-            if (doppia) {
-                tempword[i + doppia] = tempword[i];
-                doppia = 0;
+            if (dub) {
+                tempword[i + dub] = tempword[i];
+                dub = 0;
             }
 
             //fix uppercase characters
@@ -88,7 +89,7 @@ int main(void) {
             if (!onlineMode)
                 words++; //this generates a finite amount of words in debug mode
             else {
-                sendPost(tempword, accesstoken, pageid);
+                //sendPost(tempword, accesstoken, pageid);
                 sleep(3600); //1 hour = 60 * 60 seconds
             }
         } else
@@ -123,5 +124,43 @@ int isPresent(char src, const char * pool){
 			return 1;
 	}
 	return 0;
+}
+
+int sendPost(char * message, char * accesstoken, char * pageid){
+  CURL *curl;
+  CURLcode res;
+	char body[300];
+	char url[60];
+	int risultato;
+	
+  curl_global_init(CURL_GLOBAL_ALL);
+  
+	strcpy(body, "message=");
+	strcat(body, message);
+	strcat(body, "&access_token=");
+	strcat(body, accesstoken);
+	
+	strcpy(url, "https://graph.facebook.com/");
+	strcat(url, pageid);
+	strcat(url, "/feed");
+	
+
+  curl = curl_easy_init();
+  if(curl) {
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
+
+    res = curl_easy_perform(curl);
+    
+    if(res != CURLE_OK){
+      fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+      risultato = 0;
+	} else risultato = 1;
+	
+    curl_easy_cleanup(curl);
+  }
+  curl_global_cleanup();
+  return risultato;
 }
 
