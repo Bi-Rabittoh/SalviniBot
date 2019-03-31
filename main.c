@@ -3,7 +3,7 @@
 #include <string.h> /* memcpy, memset */
 #include <time.h> /*time */
 #include <ctype.h> /*toupper*/
-#include <curl/curl.h> /*sendPost*/
+#include <curl/curl.h> /*sendPost*/ //COMMENT THIS IF YOU WANT TO DEBUG OFFLINE
 
 //PROTOTYPES
 int randomRange(int min, int max);
@@ -28,8 +28,8 @@ int main(void) {
     char tempword[wordsize];
     int words, i, j, up = 0, dub = 0;
 
-    const int onlineMode = 0;
-	const int n_changes = randomRange(2, wordsize); //pick a random no. of letters to change
+    const int onlineMode = 1; //CHANGE THIS TO 0 IF YOU WANT TO DEBUG OFFLINE
+	const int n_changes = randomRange(1, wordsize); //pick a random no. of letters to change
 	
     srand((unsigned int) time(NULL));
 	
@@ -89,7 +89,7 @@ int main(void) {
             if (!onlineMode)
                 words++; //this generates a finite amount of words in debug mode
             else {
-                //sendPost(tempword, accesstoken, pageid);
+                sendPost(tempword, accesstoken, pageid); //COMMENT THIS IF YOU WANT TO DEBUG OFFLINE
                 sleep(3600); //1 hour = 60 * 60 seconds
             }
         } else
