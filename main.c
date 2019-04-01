@@ -45,7 +45,7 @@ int main(void) {
 	fclose(fp);
 	
     for (words = 0; words < 100;) {
-    	n_changes = randomRange(1, wordsize); //pick a random no. of letters to change
+    	n_changes = randomRange(wordsize / 2, wordsize); //pick a random no. of letters to change
         strcpy(tempword, word);
         for (j = 0; j < n_changes; j++) {
             //pick a random character position
@@ -98,7 +98,7 @@ int main(void) {
             else {
                 sendPost(tempword, accesstoken, pageid); //COMMENT THIS IF YOU WANT TO DEBUG OFFLINE
                 clk = time(NULL);
-                printf("%s%s changing %d letters.\n", ctime(&clk), tempword, n_changes);
+                printf("\n%s%s changing %d letters.\n", ctime(&clk), tempword, n_changes);
                 sleep(3600); //1 hour = 60 * 60 seconds
             }
         } else
